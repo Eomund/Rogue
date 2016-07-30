@@ -35,7 +35,7 @@ public class Menu extends JDialog {
 	private JFrame frame;
 	private GameType gt;
 
-	public Menu(JFrame frame, String string, boolean b, Timer time, final Panel p) {
+	public Menu(JFrame frame, String string, boolean b, Timer time) {
 		super(frame, string, b);
 		this.frame = frame;
 		this.time = time;
@@ -52,15 +52,15 @@ public class Menu extends JDialog {
 		bar.add(Box.createHorizontalGlue());
 		JButton optBut = new JButton("Options");
 		bar.add(menuBut);
-		menuBut.setFont(Panel.myFont);
+		menuBut.setFont(GUI.myFont);
 		frame.setJMenuBar(bar);
-		optBut.setFont(Panel.myFont);
+		optBut.setFont(GUI.myFont);
 		menuBut.setMaximumSize( new Dimension(menuBut.getPreferredSize().width, menuBut.getMaximumSize().height));
 		menuBut.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				open(p.getGameType());
+				open(gt);
 			}
 		});
 		
@@ -83,7 +83,7 @@ public class Menu extends JDialog {
 		
 		
 		JButton saveGame = new JButton("Save game");
-		saveGame.setFont(Panel.myFont);
+		saveGame.setFont(GUI.myFont);
 		saveGame.addActionListener(new ActionListener() {
 			
 			@Override
@@ -95,19 +95,19 @@ public class Menu extends JDialog {
 		
 		
 		JButton loadGame = new JButton("Load game");
-		loadGame.setFont(Panel.myFont);
+		loadGame.setFont(GUI.myFont);
 		loadGame.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				p.loadGame(FileDialog.showLoadGameDialog(Menu.this));
+				GameType.load(FileDialog.showLoadGameDialog(Menu.this));
 			}
 		});
 
 
 		
 		JButton exit = new JButton("Exit Game");
-		exit.setFont(Panel.myFont);
+		exit.setFont(GUI.myFont);
 		exit.addActionListener(new ActionListener() {
 			
 			@Override
@@ -120,7 +120,7 @@ public class Menu extends JDialog {
 		});
 		
 		JButton returnBut = new JButton("Return to game");
-		returnBut.setFont(Panel.myFont);
+		returnBut.setFont(GUI.myFont);
 		returnBut.addActionListener(new ActionListener() {
 			
 			@Override
@@ -139,13 +139,13 @@ public class Menu extends JDialog {
 		
 		
 
-		bars.setFont(Panel.myFont);
+		bars.setFont(GUI.myFont);
 		JLabel barLabel = new JLabel("Status bars");
-		barLabel.setFont(Panel.myFont);
+		barLabel.setFont(GUI.myFont);
 		options.add(barLabel);
 		options.add(bars);
 		score.setSelected(showScore);
-		score.setFont(Panel.myFont);
+		score.setFont(GUI.myFont);
 		options.add(score);
 		options.add(new JLabel());
 		

@@ -74,9 +74,9 @@ public class FileDialog extends JDialog {
 		bot.setBorder(new EmptyBorder(20, 0, 20, 0));
 		bot.setLayout(new BorderLayout());
 		
-		fileList.setFont(Panel.myFont);
-		text.setFont(Panel.myFont);
-		done.setFont(Panel.myFont);
+		fileList.setFont(GUI.myFont);
+		text.setFont(GUI.myFont);
+		done.setFont(GUI.myFont);
 		fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		filePanel.add(fileList, BorderLayout.CENTER);
 		
@@ -87,7 +87,7 @@ public class FileDialog extends JDialog {
 		
 		JButton cancel = new JButton("Cancel");
 		botRight.add(cancel);
-		cancel.setFont(Panel.myFont);
+		cancel.setFont(GUI.myFont);
 		
 		done.addActionListener(new ActionListener() {
 			
@@ -184,7 +184,7 @@ public class FileDialog extends JDialog {
 
 	@SuppressWarnings("hiding")
 	private void showDialog(Thing thing, Mode mode) {
-		if(mode == Mode.SAVE && !gt.getGameState().getCurrentPlayer().isHuman()){
+		if(mode == Mode.SAVE && !gt.getCurrentPlayer().isHuman()){
 			JOptionPane.showMessageDialog(this, "You can only save the game on your turn", "Wait for your turn", JOptionPane.ERROR_MESSAGE);
 			return;
 		}

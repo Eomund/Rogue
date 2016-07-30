@@ -17,6 +17,7 @@ import javax.swing.border.EmptyBorder;
 
 import core.Cell;
 import core.GameState;
+import core.GameType;
 import core.Panel;
 import core.Unit;
 
@@ -27,7 +28,7 @@ public class Selection extends JPanel implements ActionListener{
 	public static final int MOVEMODE = -1;
 	
 	//private static final int STATSHEIGHT = 239;
-	private GameState gs;
+	private GameType game;
 	private JLabel stats = new JLabel();
 	private JPanel bp = new JPanel();
 	
@@ -38,10 +39,10 @@ public class Selection extends JPanel implements ActionListener{
 	
 	private ArrayList<JToggleButton> buttons = new ArrayList<JToggleButton>();
 	
-	public Selection (GameState m, JButton end){
-		assert m != null;
-		gs = m; 
-		stats.setFont(Panel.myFont);
+	public Selection (GameType game, JButton end){
+		assert game != null;
+		this.game = game;
+		stats.setFont(GUI.myFont);
 		stats.setBorder( new EmptyBorder( 20, 20, 20, 20 ) );
 		setLayout(new BorderLayout());
 		add(stats, BorderLayout.NORTH);
@@ -70,7 +71,7 @@ public class Selection extends JPanel implements ActionListener{
 		mode = i;
 		updateStatsText(mode);
 		if(i != MOVEMODE){
-			gs.calculateShooting(unit, getModeString());
+			game.gs.calculateShooting(unit, getModeString());
 		}
 	}
 
@@ -97,14 +98,14 @@ public class Selection extends JPanel implements ActionListener{
 
 	public void findWhereYouCanMove() {
 		if(unit != null){
-			Iterator<ArrayList<Cell>> it = gs.getMapIterator();
+			Iterator<ArrayList<Cell>> it = game.gs.getMapIterator();
 			while(it.hasNext()){
 				for(Cell cell: it.next()){
 					cell.setMoveCost(-1);
 					cell.setFrom(-1, -1);
 				}
 			}
-			gs.getCell(unit).setMoveCost(unit.getMovement());
+			game.gs.getCell(unit).setMoveCost(unit.getMovement());
 			moveFrom(unit.getX(), unit.getY(), unit.getMovement());
 			
 			
@@ -120,16 +121,16 @@ public class Selection extends JPanel implements ActionListener{
 				if(i == 0 && j == 0){
 					continue;
 				}
-				if(x + i >= 0 && x + i < gs.getMapWidth() && y + j >= 0 && y + j < gs.getMapHeight()){
-					double mc = gs.getMoveCost(x, y, x + i, y + j, gs.getHuman());
+				if(x + i >= 0 && x + i <game.gs.getMapWidth() && y + j >= 0 && y + j <game.gs.getMapHeight()){
+					double mc =game.gs.getMoveCost(x, y, x + i, y + j, game.human);
 					if(mc != GameState.IMPOSSIBLE){
 						if(i != 0 && j != 0){
 							mc *= 1.5;
 						}
 						double ml = m - mc;
-						if(ml >= 0 && ml > gs.getCell(x + i, y + j).getMoveCost()){
-							gs.getCell(x + i, y + j).setMoveCost(ml);
-							gs.getCell(x + i, y + j).setFrom(x, y);
+						if(ml >= 0 && ml > game.gs.getCell(x + i, y + j).getMoveCost()){
+							game.gs.getCell(x + i, y + j).setMoveCost(ml);
+							game.gs.getCell(x + i, y + j).setFrom(x, y);
 							moveFrom(x + i, y + j, ml);
 						}
 					}
@@ -153,14 +154,14 @@ public class Selection extends JPanel implements ActionListener{
 							buttons.get(i).setMaximumSize(new Dimension(200, 40));
 							bp.add(Box.createRigidArea(new Dimension(0, 20)));
 							buttons.get(i).setAlignmentX(Component.CENTER_ALIGNMENT);
-							buttons.get(i).setFont(Panel.myFont);
+							buttons.get(i).setFont(GUI.myFont);
 						}
 						
 						buttons.get(i).setText(name);
 						if(mode == MOVEMODE){
 							buttons.get(i).setSelected(false);
 						}
-						if(gs.getPlayer(turn).isHuman() && unit.getMovement() > unit.getAttackCost(name)){
+						if(game.getPlayer(turn).isHuman() && unit.getMovement() > unit.getAttackCost(name)){
 							buttons.get(i).setEnabled(true);
 						}else{
 							buttons.get(i).setEnabled(false);
@@ -271,8 +272,8 @@ public class Selection extends JPanel implements ActionListener{
 
 
 
-	public void setGameState(GameState gs2) {
-		gs = gs2;
+	public void setGame(GameType g2) {
+		game = g2;
 		deselect();
 	}
 

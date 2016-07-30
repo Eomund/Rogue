@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import core.GameType;
 import core.Unit;
 
 
@@ -14,12 +15,13 @@ public class Player implements Serializable{
 	private Zone zone;
 	private ArrayList<Unit> myUnits = new ArrayList<>();
 	private int score = 0;
+	protected GameType game;
 	
-	
-	public Player(Color colour, String name) {
+	public Player(Color colour, String name, GameType gt) {
 		super();
 		this.colour = colour;
 		this.name = name;
+		this.game = gt;
 	}
 
 
@@ -95,6 +97,11 @@ public class Player implements Serializable{
 	public void removeZone() {
 		zone = null;
 		
+	}
+
+
+	public void setGame(GameType game2) {
+		this.game = game2;
 	}
 
 

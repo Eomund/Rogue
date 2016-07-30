@@ -6,10 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -26,7 +23,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import core.GameState;
+import core.GameType;
 import core.Panel;
 import helpers.AI;
 import helpers.Config;
@@ -91,7 +88,7 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 			bot[i].setLayout(new BorderLayout());
 			next[i] = new JButton("Next");
 			next[i].addActionListener(this);
-			next[i].setFont(Panel.myFont);
+			next[i].setFont(GUI.myFont);
 			bot[i].add(next[i], BorderLayout.EAST);
 			panels[i].add(bot[i], BorderLayout.SOUTH);
 			tabs.add(tabNames[i], new JScrollPane(panels[i]));
@@ -102,7 +99,7 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 		main.setLayout(new GridLayout(4, 1));
 		main.setBorder(new EmptyBorder(0, 0, 250, 0));
 		JLabel wLabel = new JLabel("Width");
-		wLabel.setFont(Panel.myFont);
+		wLabel.setFont(GUI.myFont);
 		main.add(wLabel);
 		
 
@@ -113,14 +110,14 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 		width.setMinorTickSpacing(5);
 		width.setPaintLabels(true);
 		width.setPaintTicks(true);
-		width.setFont(Panel.myFont);
+		width.setFont(GUI.myFont);
 		width.setValue(width.getMinimum());
 		width.setPaintTrack(true);
 		width.putClientProperty( "Slider.paintThumbArrowShape", Boolean.TRUE );
 		main.add(width);
 		
 		JLabel hLabel = new JLabel("Height");
-		hLabel.setFont(Panel.myFont);
+		hLabel.setFont(GUI.myFont);
 		main.add(hLabel);
 		height.setMinimum(mapMinimum);
 		height.setMaximum(MAPMAXIMUM);
@@ -128,13 +125,13 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 		height.setMinorTickSpacing(5);
 		height.setPaintLabels(true);
 		height.setPaintTicks(true);
-		height.setFont(Panel.myFont);
+		height.setFont(GUI.myFont);
 		height.setValue(height.getMinimum());
 		height.putClientProperty( "Slider.paintThumbArrowShape", Boolean.TRUE );
 		main.add(height);
 		
 		JLabel hillLabel = new JLabel("Hillyness");
-		hillLabel.setFont(Panel.myFont);
+		hillLabel.setFont(GUI.myFont);
 		main.add(hillLabel);
 		hillyness.setMinimum(HILLMINIMUM);
 		hillyness.setMaximum(HILLMAXIMUM);
@@ -143,7 +140,7 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 		hillyness.setMinorTickSpacing(1);
 		hillyness.setPaintLabels(true);
 		hillyness.setPaintTicks(true);
-		hillyness.setFont(Panel.myFont);
+		hillyness.setFont(GUI.myFont);
 		hillyness.putClientProperty( "Slider.paintThumbArrowShape", Boolean.TRUE );
 		main.add(hillyness);
 		
@@ -152,9 +149,9 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 		
 		JPanel armySize = new JPanel();
 		JLabel sizeLabel = new JLabel("Army Size");
-		sizeLabel.setFont(Panel.myFont);
+		sizeLabel.setFont(GUI.myFont);
 		armySize.add(sizeLabel);
-		sizeSlider.setFont(Panel.myFont);
+		sizeSlider.setFont(GUI.myFont);
 		armySize.add(sizeSlider);
 		sizeSlider.setMinimum(1);
 		sizeSlider.setMinorTickSpacing(1);
@@ -169,8 +166,8 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 		
 		armySize.setLayout(new GridLayout(5, 1, 20, 20));
 		armySize.add(gameType);
-		gt.setFont(Panel.myFont);
-		gameType.setFont(Panel.myFont);
+		gt.setFont(GUI.myFont);
+		gameType.setFont(GUI.myFont);
 		
 		armySize.setBorder(new EmptyBorder(20, 20, 250, 20));
 		
@@ -196,11 +193,11 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 			}else{
 				active[i].setSelectedItem("Closed");
 			}
-			active[i].setFont(Panel.myFont);
+			active[i].setFont(GUI.myFont);
 			tMain.add(active[i]);
 			tMain.add(names[i]);
 			tMain.add(colourLabels[i]);
-			names[i].setFont(Panel.myFont);
+			names[i].setFont(GUI.myFont);
 			colourLabels[i].addMouseListener(this);
 		}
 		active[0].removeAllItems();
@@ -209,7 +206,7 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 		active[0].setEnabled(false);
 
 		JButton done = new JButton("Done");
-		done.setFont(Panel.myFont);
+		done.setFont(GUI.myFont);
 		JPanel tbot = new JPanel();
 		tbot.setLayout(new BorderLayout());
 		tbot.add(done, BorderLayout.EAST);	
@@ -227,7 +224,7 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 		
 		
 		tabs.addChangeListener(this);
-		tabs.setFont(Panel.myFont);
+		tabs.setFont(GUI.myFont);
 		frame.add(tabs);
 		frame.setSize(500, 800);
 		frame.setLocation(600, 20);
@@ -240,19 +237,21 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
     
 	protected void startTheGame(long mapSeed, long gameSeed) {
 
-		
+		ArrayList<String> playerNames = new ArrayList<>();
+		ArrayList<Color> cols = new ArrayList<>();
+		ArrayList<Boolean> bools = new ArrayList<>();
 		ArrayList<Player> players = new ArrayList<Player>();
 		for(int i = 0; i < ABSOLUTEMAXTEAMS; i++){
-			if(active[i].getSelectedItem().equals("Human")){
-				players.add(new Player(colourLabels[i].getBackground(), names[i].getText()));
-			}else if(active[i].getSelectedItem().equals("AI")){
-				players.add(new AI(colourLabels[i].getBackground(), names[i].getText()));
+			if(!active[i].getSelectedItem().equals("Closed")){
+				playerNames.add(names[i].getText());
+				cols.add(colourLabels[i].getBackground());
+				bools.add(active[i].getSelectedItem().equals("Human"));
 			}
 		}
 		
 		System.out.println("Starting game...");
 		frame.setVisible(false);
-		Panel.start(mapWidth, mapHeight, hillyness.getValue(), sizeSlider.getValue(), players, mapSeed, gameSeed, (String) gameType.getSelectedItem());
+		GameType.start(mapWidth, mapHeight, hillyness.getValue(), sizeSlider.getValue(), playerNames, cols, bools, mapSeed, gameSeed, (String) gameType.getSelectedItem());
 		
 		
 	}

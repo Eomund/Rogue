@@ -19,6 +19,7 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import core.GameType;
 import core.Panel;
 import helpers.Config;
 import helpers.Player;
@@ -36,7 +37,7 @@ public class Splash extends JFrame{
 
 	public Splash(final long mapSeed, final long gameSeed){
 		JButton newGame = new JButton("New Game");
-		newGame.setFont(Panel.myFont);
+		newGame.setFont(GUI.myFont);
 		setLayout(new BorderLayout());
 		JPanel buttons = new JPanel();
 		buttons.add(newGame);
@@ -50,7 +51,7 @@ public class Splash extends JFrame{
 		});
 		
 		JButton quick = new JButton("Quick start");
-		quick.setFont(Panel.myFont);
+		quick.setFont(GUI.myFont);
 		buttons.add(quick);
 		
 		
@@ -62,7 +63,7 @@ public class Splash extends JFrame{
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Panel.start(mapwidth, mapheight, hillyness, armySize, players, mapSeed, gameSeed, gtName);
+				GameType.start(mapwidth, mapheight, hillyness, armySize, players, mapSeed, gameSeed, gtName);
 				setVisible(false);
 			}
 		});

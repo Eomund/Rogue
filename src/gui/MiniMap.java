@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 
 import core.Cell;
 import core.GameState;
+import core.GameType;
 
 
 
@@ -17,7 +18,7 @@ import core.GameState;
 public class MiniMap extends JPanel implements ActionListener{
 	
 	
-	private GameState gs;
+	private GameType game;
 	
 	private int mode = 0;
 	private String[] modes = {"Elevation", "Terrain"};
@@ -37,10 +38,10 @@ public class MiniMap extends JPanel implements ActionListener{
 	private static final int MAXHEIGHT = 300;
 	
 	
-	public MiniMap(GameState g, double r, JButton but){
+	public MiniMap(GameType g, double r, JButton but){
 		super();
 		assert g != null;
-		gs = g;
+		game = g;
 		cellRatio = r;
 		setBackground(Color.white);
 		but.setText(modes[mode]);
@@ -51,9 +52,8 @@ public class MiniMap extends JPanel implements ActionListener{
 
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
-		
-		int width = 3 + gs.getFarRight() - gs.getFarLeft();
-		int height = 3 + gs.getFarDown() - gs.getFarUp();
+		int width = 3 + game.gs.getFarRight() - game.gs.getFarLeft();
+		int height = 3 + game.gs.getFarDown() - game.gs.getFarUp();
 		double mapRatio = height / (double)width;
 		int mmWidth = getWidth() - 10;
 		int mmHeight = (int) (mmWidth * mapRatio);
@@ -62,7 +62,6 @@ public class MiniMap extends JPanel implements ActionListener{
 			mmHeight = MAXHEIGHT;
 			mmWidth = (int)(mmHeight / mapRatio);
 		}
-		
 		setPreferredSize(new Dimension(getWidth(), mmHeight + 10));
 		setMaximumSize(new Dimension(getWidth(), mmHeight + 10));
 		if(width != 0 && height != 0){
@@ -71,19 +70,19 @@ public class MiniMap extends JPanel implements ActionListener{
 			pxHeight = (int) (cellRatio * pxWidth);
 			xoff = 5 + (mmWidth - (pxWidth * width)) / 2;
 			yoff = 5 + (mmHeight - (pxHeight * height)) / 2;
-			for(int x = Math.max(0, gs.getFarLeft() - 1); x < Math.min(gs.getMapWidth(), gs.getFarRight() + 2); x++){
-				for(int y = Math.max(0, gs.getFarUp() - 1); y < Math.min(gs.getMapHeight(), gs.getFarDown() + 2); y++){
-					Cell cell = gs.getCell(x, y);
-					if(cell.hasViewed(gs.getHuman())){
+			for(int x = Math.max(0, game.gs.getFarLeft() - 1); x < Math.min(game.gs.getMapWidth(), game.gs.getFarRight() + 2); x++){
+				for(int y = Math.max(0, game.gs.getFarUp() - 1); y < Math.min(game.gs.getMapHeight(), game.gs.getFarDown() + 2); y++){
+					Cell cell = game.gs.getCell(x, y);
+					if(cell.hasViewed(game.human)){
 						if(modes[mode].equals("Terrain")){
 							g.drawImage(cell.getTerrain().getBaseImage(), toPixels(x, true), toPixels(y, false), pxWidth, pxHeight, null);
 						}
 						if(modes[mode].equals("Elevation")){
-							g.setColor(new Color(0, 0, 0, 1 - (cell.getElevation() /(float) gs.getHighest())));
+							g.setColor(new Color(0, 0, 0, 1 - (cell.getElevation() /(float) game.gs.getHighest())));
 							g.fillRect( toPixels(x, true), toPixels(y, false), pxWidth, pxHeight);
 						}
 						
-						if(cell.isViewed(gs.getHuman()) && cell.getUnit() != null){
+						if(cell.isViewed(game.human) && cell.getUnit() != null){
 							g.setColor(cell.getUnit().getOwner().getColour());
 							g.fillRect(toPixels(x, true), toPixels(y, false), pxWidth, pxHeight);
 							
@@ -119,21 +118,21 @@ public class MiniMap extends JPanel implements ActionListener{
 	
 	private int toPixels(double m, boolean x){
 		if(x){
-			return (int)Math.round(xoff + (1 + m - gs.getFarLeft()) * pxWidth);
+			return (int)Math.round(xoff + (1 + m - game.gs.getFarLeft()) * pxWidth);
 		}
-		return (int)Math.round(yoff + (1 + m - gs.getFarUp()) * pxHeight);
+		return (int)Math.round(yoff + (1 + m - game.gs.getFarUp()) * pxHeight);
 	}
 
 	public int toCell(int m, boolean x) {
 		if(x){
-			return (m - xoff) / pxWidth + gs.getFarLeft() - 1;
+			return (m - xoff) / pxWidth + game.gs.getFarLeft() - 1;
 		}
-		return (m - yoff) / pxHeight + gs.getFarUp() - 1;
+		return (m - yoff) / pxHeight + game.gs.getFarUp() - 1;
 	}
 
 
-	public void setGameState(GameState gs2) {
-		gs = gs2;
+	public void setGameState(GameType g2) {
+		game = g2;
 	}
 	
 

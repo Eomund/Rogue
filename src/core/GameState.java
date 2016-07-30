@@ -45,26 +45,22 @@ public class GameState implements Serializable {
 	private int farDown = 0;
 	private ArrayList<Zone> zones = new ArrayList<>();
 	private int largestRegion = -1;
-	private ArrayList<Player> players;
 	private int armySize;
-	private Player human;
-	private int turn = 0;
+	private GameType game;
 
-	public GameState(int mapwidth, int mapheight, int hillyness, int armySize, ArrayList<Player> players, long mapSeed, long gs, String gtName){
+
+	public GameState(int mapwidth, int mapheight, int armySize){
 		this.mapwidth = mapwidth;
 		this.mapheight = mapheight;
-		this.players = players;
 		this.armySize  = armySize;
 		farLeft = mapwidth;
 		farUp = mapheight;
-		
-		for(Player p: players){
-			if(p.isHuman()){
-				human = p;
-			}
-		}
-		
-		writeToTemp(mapwidth, mapheight, hillyness, armySize, players, gtName);
+
+	}
+	
+	public void makeWorld(GameType g, String name, int hillyness, long mapSeed, long gs){
+		game = g;
+		writeToTemp(mapwidth, mapheight, hillyness, armySize, game.getPlayers(), name);
 		
 		for(String[] t: Config.rawTerrain){
 			System.out.println("Loading terrain: " + t[0]);
@@ -80,7 +76,7 @@ public class GameState implements Serializable {
 			}
 			
 			System.out.println("Loading unit : " + 	u[0].trim());
-			unitTypes.put(u[0].trim(), new UnitType(u[0].trim(), u[1].trim(), partNum, players));
+			unitTypes.put(u[0].trim(), new UnitType(u[0].trim(), u[1].trim(), partNum, game.getPlayers()));
 			for(int i = 9; i < u.length; i+= 5){
 				if(i + 5 > u.length){
 					break;
@@ -206,12 +202,12 @@ public class GameState implements Serializable {
 
 
 	private boolean handOutZones() {
-		for(Player p: players){
+		for(Player p: game.getPlayers()){
 			p.removeZone();
 		}
 		
 		System.out.println("Handing out zones...");
-		for(Player p: players){
+		for(Player p: game.getPlayers()){
 			int z = -1;
 			boolean good = true;
 			do{
@@ -224,7 +220,7 @@ public class GameState implements Serializable {
 				}
 				
 				
-				for(Player other:players){
+				for(Player other:game.getPlayers()){
 					if(other.equals(p)){
 						continue;
 					}
@@ -263,8 +259,8 @@ public class GameState implements Serializable {
 				goodZones++;
 			}
 		}
-		System.out.println(goodZones + " > " + players.size());
-		return goodZones > players.size();
+		System.out.println(goodZones + " > " + game.getNumPlayers());
+		return goodZones > game.getNumPlayers();
 		
 	}
 
@@ -345,7 +341,7 @@ public class GameState implements Serializable {
 
 
 	private boolean isUsed(int i) {
-		for(Player p: players){
+		for(Player p: game.getPlayers()){
 			for(Unit u: p.getUnits()){
 				if(i == Integer.parseInt(u.getName().split("[a-z]")[0])){
 					return true;
@@ -360,7 +356,7 @@ public class GameState implements Serializable {
 
 	private boolean generateUnits() {
 		System.out.println("Generating units...");
-		for(Player p:players){
+		for(Player p:game.getPlayers()){
 			for(int i = 0; i < armySize; i++){
 				spawnUnit(p);
 			}
@@ -426,7 +422,7 @@ public class GameState implements Serializable {
 			}
 		}
 		
-		for(Player p:players){
+		for(Player p:game.getPlayers()){
 			for(Unit u: p.getUnits()){
 				for(ArrayList<Cell> row: map){
 					for(Cell cell: row){
@@ -1009,7 +1005,7 @@ public class GameState implements Serializable {
 		}
 		
 		int[] next = unit.lookAtNext();
-		while(!getCell(unit).isViewed(human) && !getCell(next[0], next[1]).isViewed(human)){
+		while(!getCell(unit).isViewed(game.human) && !getCell(next[0], next[1]).isViewed(game.human)){
 			unit.popNext();
 			moveUnit(unit, next[0], next[1], unit.popCost());
 			if(!unit.isMoving()){
@@ -1069,7 +1065,7 @@ public class GameState implements Serializable {
 		if(unit.isMoving()){
 			int[] next = unit.lookAtNext();
 			
-			while(!getCell(unit).isViewed(human) && !getCell(next[0], next[1]).isViewed(human)){
+			while(!getCell(unit).isViewed(game.human) && !getCell(next[0], next[1]).isViewed(game.human)){
 				next = unit.popNext();
 				moveUnit(unit, next[0], next[1], unit.popCost());
 				if(!unit.isMoving()){
@@ -1133,42 +1129,6 @@ public class GameState implements Serializable {
 
 
 
-	public Player getPlayer(int i) {
-		return players.get(i);
-	}
-
-	public Player getHuman(){
-		return human;
-	}
-
-
-
-
-	public int getNumPlayers() {
-		return players.size();
-	}
-
-
-
-
-	public ArrayList<Player> getPlayers() {
-		return players;
-	}
-
-
-	public int getTurn(){
-		return turn;
-	}
-	
-	public Player getCurrentPlayer(){
-		return players.get(turn);
-	}
-	
-	public void incrementTurn(){
-		turn++;
-		turn = turn % players.size();
-		players.get(turn).resetMovement();
-	}
 
 
 
@@ -1182,7 +1142,7 @@ public class GameState implements Serializable {
 	    Iterator<Entry<String, UnitType>> iter = unitTypes.entrySet().iterator();
 	    while (iter.hasNext()) {
 	        Map.Entry<String, UnitType> pair = iter.next();
-	        pair.getValue().loadImages(players);
+	        pair.getValue().loadImages(game.getPlayers());
 	    }
 	}
 

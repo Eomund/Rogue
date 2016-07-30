@@ -1,14 +1,16 @@
 package helpers;
-import core.GameState;
 import core.GameType;
 
 public class EliminationGame extends GameType {
 
 	private static final long serialVersionUID = 1L;
 
-	public EliminationGame(GameState gs) {
-		super(gs);
-		for(Player p: gs.getPlayers()){
+	public EliminationGame(int mapWidth, int mapHeight, int armySize) {
+		super(mapWidth, mapHeight, armySize);
+	}
+	
+	public void Setup(){
+		for(Player p: getPlayers()){
 			p.setScore(p.getUnits().size());
 		}
 	}
@@ -17,7 +19,7 @@ public class EliminationGame extends GameType {
 	public Player win() {
 		int count = 0;
 		Player win = null;
-		for(Player p: gs.getPlayers()){
+		for(Player p: getPlayers()){
 			if(p.getUnits().size() != 0){
 				count++;
 				win = p;
