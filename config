@@ -1,0 +1,12 @@
+[Terrain]
+Grass,img/grass.png, of course
+Water, img/water.png, never
+
+[UNITS]
+;name, 		image, 			sight, 		movement,	max hp, 	firepower	acc		range, 	attack cost,		special attacks
+Infantry, img/redcoat.png, 	6, 			10,			20,			5,			50,		5,		4,					Volley, 2, 1.5, 1,2,   Bayonet,4,1.5,.2,1.2
+
+[GENERAL]
+
+;save stuff in folder
+saves=saves
