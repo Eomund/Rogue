@@ -215,18 +215,20 @@ public class Unit implements Serializable{
 		return str;
 	}
 
-	public void shootAt(Unit unit, String attack, boolean up) {
-		target = unit;
+	public void shootAt(Cell cell, boolean up) {
+		target = cell.getUnit();
+		assert target != null;
 		moveStep = 0;
 		move = 0;
 		damage = 0;
+		String attack = owner.getAttack();
 		int fp = getFirePower(attack);
 		for(int i = 0; i < fp; i++){
 			if(rand.nextInt(100) < getAcc(attack, up)){
 				damage++;
 			}
 		}
-		unit.reduceHP(damage);
+		target.reduceHP(damage);
 	}
 
 	private void reduceHP(int d) {
@@ -258,9 +260,6 @@ public class Unit implements Serializable{
 	public Player getOwner() {
 		return owner;
 	}
-
-
-
 
 
 	

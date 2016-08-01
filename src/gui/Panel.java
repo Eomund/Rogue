@@ -1,50 +1,28 @@
-package core;
+package gui;
+import helpers.Corner;
+import helpers.Player;
+import helpers.Terrain;
+
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Arc2D;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.ListIterator;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.Timer;
-import javax.swing.UIManager;
 
-import gui.FileDialog;
-import gui.GUI;
-import gui.Menu;
-import gui.MiniMap;
-import gui.Selection;
-import helpers.AI;
-import helpers.Corner;
-import helpers.Player;
-import helpers.Terrain;
-import helpers.Zone;
+import core.Cell;
+import core.GameState;
+import core.Unit;
 
 
 @SuppressWarnings("serial")
@@ -70,36 +48,40 @@ public class Panel extends JPanel {
 	private int hovY = -1;
 	
 
-	private GameType game;
+	private LocalPlayer player;
 	
 
-	public Panel(GameType myGame){
+	public Panel(LocalPlayer p){
 		super();
-		game = myGame;
+		this.player = p;
 		setLayout(new BorderLayout());
 
 		
 		
 		
 		addMouseListener(new MouseListener() {
+			@Override
 			public void mouseReleased(MouseEvent arg0) {}
+			@Override
 			public void mousePressed(MouseEvent e) {
 				prevX = e.getX();
 				prevY = e.getY();
 			}
+			@Override
 			public void mouseExited(MouseEvent arg0) {
 				hovX = -1;
 				hovY = -1;
 				
 			}
+			@Override
 			public void mouseEntered(MouseEvent arg0) {}
 			
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if(e.getButton() == MouseEvent.BUTTON1){
-					game.human.doClick((e.getX() - xoff) * 20 / (zoom * squareWidth) , (e.getY() - yoff) * 20 / (zoom * squareHeight), e.getModifiers(), e.getClickCount());
+					player.gui.doClick((e.getX() - xoff) * 20 / (zoom * squareWidth) , (e.getY() - yoff) * 20 / (zoom * squareHeight), e.getModifiers(), e.getClickCount());
 				}else if(e.getButton() == MouseEvent.BUTTON3){
-					game.human.doRightClick((e.getX() - xoff) * 20 / (zoom * squareWidth) , (e.getY() - yoff) * 20 / (zoom * squareHeight), e.getModifiers());
+					player.gui.doRightClick((e.getX() - xoff) * 20 / (zoom * squareWidth) , (e.getY() - yoff) * 20 / (zoom * squareHeight), e.getModifiers());
 
 				}
 				
@@ -125,7 +107,7 @@ public class Panel extends JPanel {
 				
 				
 
-				game.human.repaintAll();;
+				player.gui.repaintAll();;
 			}
 		});
 		
@@ -153,7 +135,7 @@ public class Panel extends JPanel {
 				fixOffsets();
 				prevX = e.getX();
 				prevY = e.getY();
-				game.human.repaintAll();;
+				player.gui.repaintAll();;
 			}
 			
 		});
@@ -165,7 +147,7 @@ public class Panel extends JPanel {
 			
 			@Override
 			public void componentResized(ComponentEvent arg0) {
-				game.human.updateOffset(xoff * -20.0 / (zoom * squareWidth), yoff * -20 / (zoom * squareHeight), Panel.this.getWidth() * 20 / (zoom * squareWidth), Panel.this.getHeight() * 20 / (zoom * squareHeight));
+				player.gui.updateOffset(xoff * -20.0 / (zoom * squareWidth), yoff * -20 / (zoom * squareHeight), Panel.this.getWidth() * 20 / (zoom * squareWidth), Panel.this.getHeight() * 20 / (zoom * squareHeight));
 
 				
 			}
@@ -185,12 +167,12 @@ public class Panel extends JPanel {
 
 
 	public void fixOffsets(){
-		xoff = Math.max(xoff, Panel.this.getWidth() - toPixels(Math.min(game.gs.getFarRight() + 2, game.gs.getMapWidth()), true, false));
-		yoff = Math.max(yoff, Panel.this.getHeight() - toPixels(Math.min(game.gs.getFarDown() + 2, game.gs.getMapHeight()), false, false));
-		xoff = Math.min(xoff,  -1 * toPixels(Math.max(game.gs.getFarLeft() - 1, 0), true, false));
-		yoff = Math.min(yoff,  -1 * toPixels(Math.max(game.gs.getFarUp() - 1, 0), false, false));
+		xoff = Math.max(xoff, Panel.this.getWidth() - toPixels(Math.min(player.getFarRight() + 2, player.getMapWidth()), true, false));
+		yoff = Math.max(yoff, Panel.this.getHeight() - toPixels(Math.min(player.getFarDown() + 2, player.getMapHeight()), false, false));
+		xoff = Math.min(xoff,  -1 * toPixels(Math.max(player.getFarLeft() - 1, 0), true, false));
+		yoff = Math.min(yoff,  -1 * toPixels(Math.max(player.getFarUp() - 1, 0), false, false));
 
-		game.human.updateOffset(xoff * -20.0 / (zoom * squareWidth), yoff * -20.0 / (zoom * squareHeight), Panel.this.getWidth() * 20 / (zoom * squareWidth), Panel.this.getHeight() * 20 / (zoom * squareHeight));
+		player.gui.updateOffset(xoff * -20.0 / (zoom * squareWidth), yoff * -20.0 / (zoom * squareHeight), Panel.this.getWidth() * 20 / (zoom * squareWidth), Panel.this.getHeight() * 20 / (zoom * squareHeight));
 	}
 	
 	
@@ -215,10 +197,11 @@ public class Panel extends JPanel {
 		xoff = -1 * (toPixels(x, true, false) - (getWidth() / 2));
 		yoff = -1 * (toPixels(y, false, false) - (getHeight() / 2));
 		fixOffsets();
-		game.human.updateOffset(xoff * -20.0 / (zoom * squareWidth), yoff * -20.0 / (zoom * squareHeight), getWidth() * 20.0 / (zoom * squareWidth), getHeight() * 20.0 / (zoom * squareHeight));
-		game.human.repaintAll();
+		player.gui.updateOffset(xoff * -20.0 / (zoom * squareWidth), yoff * -20.0 / (zoom * squareHeight), getWidth() * 20.0 / (zoom * squareWidth), getHeight() * 20.0 / (zoom * squareHeight));
+		player.gui.repaintAll();
 	}
 	
+	@Override
 	public void paintComponent(Graphics og){
 		super.paintComponent(og);
 		Graphics2D g = (Graphics2D)og;
@@ -226,11 +209,11 @@ public class Panel extends JPanel {
 		g.setFont(GUI.myFont);
 		
 		//Terrain loop
-		for(int x = Math.max(0, game.gs.getFarLeft() - 1); x < Math.min(game.gs.getMapWidth(), game.gs.getFarRight() + 2); x++){
-			for(int y = Math.max(0, game.gs.getFarUp() - 1); y < Math.min(game.gs.getMapHeight(), game.gs.getFarDown() + 2); y++){
-				Cell cell = game.gs.getCell(x, y);
+		for(int x = Math.max(0, player.getFarLeft() - 1); x < Math.min(player.getMapWidth(), player.getFarRight() + 2); x++){
+			for(int y = Math.max(0, player.getFarUp() - 1); y < Math.min(player.getMapHeight(), player.getFarDown() + 2); y++){
+				Cell cell = player.getCell(x, y);
 				
-				if(cell.hasViewed(game.human)){
+				if(cell != null){
 					g.drawImage(cell.getTerrain().getMainImage(), toPixels(x, true) , toPixels(y, false) ,  toPixels(1, true, false) ,  toPixels(1, false, false), null);
 					for(int i = 0; i < 4; i++){
 						if(cell.getCorner(i) == null || cell.getCorner(i).getTerrain() == null){
@@ -246,16 +229,16 @@ public class Panel extends JPanel {
 		
 		
 		//Line loop
-		for(int i = 0; i <= game.gs.getHighest(); i++){
+		for(int i = 0; i <= player.getMapHighest(); i++){
 		
-			for(int x = Math.max(0, game.gs.getFarLeft() - 1); x < Math.min(game.gs.getMapWidth(), game.gs.getFarRight() + 2); x++){
-				for(int y = Math.max(0, game.gs.getFarUp() - 1); y < Math.min(game.gs.getMapHeight(), game.gs.getFarDown() + 2); y++){
-					Cell cell = game.gs.getCell(x, y);
+			for(int x = Math.max(0, player.getFarLeft() - 1); x < Math.min(player.getMapWidth(), player.getFarRight() + 2); x++){
+				for(int y = Math.max(0, player.getFarUp() - 1); y < Math.min(player.getMapHeight(), player.getFarDown() + 2); y++){
+					Cell cell = player.getCell(x, y);
 					
-					if(cell.getElevation() == i){
+					if(cell != null){
 						
 						
-						if(cell.hasViewed(game.human)){
+						if(cell.getElevation() == i){
 							
 							
 							//Corners
@@ -418,51 +401,59 @@ public class Panel extends JPanel {
 		g.setColor(new Color(.5f, .5f, .5f, .9f));
 		
 		//fog of war
-		for(int x = Math.max(0, game.gs.getFarLeft() - 1); x < Math.min(game.gs.getMapWidth(), game.gs.getFarRight() + 2); x++){
-			for(int y = Math.max(0, game.gs.getFarUp() - 1); y < Math.min(game.gs.getMapHeight(), game.gs.getFarDown() + 2); y++){
-				Cell cell = game.gs.getCell(x, y);
-				if(cell.hasViewed(game.human)){
-					if(!cell.isViewed(game.human)){
+		for(int x = Math.max(0, player.getFarLeft() - 1); x < Math.min(player.getMapWidth(), player.getFarRight() + 2); x++){
+			for(int y = Math.max(0, player.getFarUp() - 1); y < Math.min(player.getMapHeight(), player.getFarDown() + 2); y++){
+				Cell cell = player.getCell(x, y);
+				boolean up = y > 0 && player.getCell(x, y - 1) != null && player.getCell(x, y -1).isViewed(player);
+				boolean down = y < player.getMapHeight() - 1 && player.getCell(x, y + 1) != null && player.getCell(x, y + 1).isViewed(player);
+				boolean left = x > 0 && player.getCell(x - 1, y) != null && player.getCell(x -1 , y).isViewed(player);
+				boolean right = x < player.getMapWidth() - 1 && player.getCell(x + 1, y) != null && player.getCell(x + 1 , y).isViewed(player);
+				
+				if(cell != null){
+					if(!cell.isViewed(player)){
 						g.drawImage(Terrain.mainmask, toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
 					}
 					
-					if(y == game.gs.getMapHeight() - 1 || x == game.gs.getMapWidth() - 1){
-						if(!cell.isViewed(game.human)){
+					if(y == player.getMapHeight() - 1 || x == player.getMapWidth() - 1){
+						if(!cell.isViewed(player)){
 							g.drawImage(Terrain.masks[0], toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
 						}
-					}else if((!game.gs.getCell(x, y + 1).isViewed(game.human) && !game.gs.getCell(x + 1, y).isViewed(game.human))  || (!cell.isViewed(game.human) &&  (!game.gs.getCell(x, y + 1).isViewed(game.human) || !game.gs.getCell(x + 1, y).isViewed(game.human)))){
-						if(!game.gs.getCell(x + 1, y + 1).isViewed(game.human) || !cell.isViewed(game.human)){
-							g.drawImage(Terrain.masks[0], toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
+					}else {
+						
+						if((!down && !right)  || (!cell.isViewed(player) && !down || !right)){
+							if(player.getCell(x + 1, y + 1) != null && player.getCell(x + 1, y +1) != null && !player.getCell(x + 1, y + 1).isViewed(player) || !cell.isViewed(player)){
+								g.drawImage(Terrain.masks[0], toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
+							}
 						}
 					}
 					
-					if(y == game.gs.getMapHeight() - 1 || x == 0){
-						if(!cell.isViewed(game.human)){
+					if(y == player.getMapHeight() - 1 || x == 0){
+						if(!cell.isViewed(player)){
 							g.drawImage(Terrain.masks[1], toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
 						}
-					}else if((!game.gs.getCell(x, y + 1).isViewed(game.human) && !game.gs.getCell(x - 1, y).isViewed(game.human))  || (!cell.isViewed(game.human) &&  (!game.gs.getCell(x, y + 1).isViewed(game.human) || !game.gs.getCell(x - 1, y).isViewed(game.human)))){
-						if(!game.gs.getCell(x - 1, y + 1).isViewed(game.human) || !cell.isViewed(game.human)){
+					}else if((!down && !left)  || (!cell.isViewed(player) && !down || !left)){
+						if(player.getCell(x - 1, y + 1) != null && !player.getCell(x - 1, y + 1).isViewed(player) || !cell.isViewed(player)){
 							g.drawImage(Terrain.masks[1], toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
 						}				
 					}
 					
-					if(y == 0|| x == game.gs.getMapWidth() - 1){
-						if(!cell.isViewed(game.human)){
+					if(y == 0|| x == player.getMapWidth() - 1){
+						if(!cell.isViewed(player)){
 							g.drawImage(Terrain.masks[2], toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
 						}
-					}else if((!game.gs.getCell(x, y - 1).isViewed(game.human) && !game.gs.getCell(x + 1, y).isViewed(game.human)) || (!cell.isViewed(game.human) &&  (!game.gs.getCell(x, y - 1).isViewed(game.human) || !game.gs.getCell(x + 1, y).isViewed(game.human)))){
-						if(!game.gs.getCell(x + 1, y - 1).isViewed(game.human) || !cell.isViewed(game.human)){
+					}else if((!up && !right) || (!cell.isViewed(player) &&  (!up || !right))){
+						if(player.getCell(x + 1, y - 1) != null && !player.getCell(x + 1, y - 1).isViewed(player) || !cell.isViewed(player)){
 							g.drawImage(Terrain.masks[2], toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
 						}
 					}
 					
 					if(y == 0|| x == 0){
-						if(!cell.isViewed(game.human)){
+						if(!cell.isViewed(player)){
 							g.drawImage(Terrain.masks[3], toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
 						}
-					}else if((!game.gs.getCell(x, y - 1).isViewed(game.human) && !game.gs.getCell(x - 1, y).isViewed(game.human))  || (!cell.isViewed(game.human) &&  (!game.gs.getCell(x, y - 1).isViewed(game.human) || !game.gs.getCell(x - 1, y).isViewed(game.human)))){
+					}else if((!up && !left)  || (!cell.isViewed(player) &&  (!up || !left))){
 						
-						if(!game.gs.getCell(x - 1, y - 1).isViewed(game.human) || !cell.isViewed(game.human)){
+						if(player.getCell(x - 1, y - 1) != null && !player.getCell(x - 1, y - 1).isViewed(player) || !cell.isViewed(player)){
 							g.drawImage(Terrain.masks[3], toPixels(x, true) , toPixels(y, false) , toPixels(1, true, false) ,  toPixels(1, false, false), null);
 						}
 					}
@@ -476,7 +467,7 @@ public class Panel extends JPanel {
 			}
 		}
 		
-		Unit selectedUnit = game.human.getSelectedUnit();
+		Unit selectedUnit = player.gui.getSelectedUnit();
 		
 		if(selectedUnit != null ){
 			float selectoffx = 0;
@@ -491,19 +482,19 @@ public class Panel extends JPanel {
 			g.setStroke(d2);
 			g.drawArc(toPixels(selectedUnit.getX() + selectoffx, true), toPixels(selectedUnit.getY() + selectoffy, false), toPixels(1, true, false), toPixels(1, false, false), 0 , 360);
 			//Path of selected unit
-			if(game.getCurrentPlayer().isHuman() && !selectedUnit.isActive() && selectedUnit.getOwner().isHuman() && game.human.getSelectionMode() == Selection.MOVEMODE){
-				if(hovX >=  0 && hovX < game.gs.getMapWidth() && hovY >= 0 && hovY < game.gs.getMapHeight()){
+			if(player.getGameCurrentPlayer().isHuman() && !selectedUnit.isActive() && selectedUnit.getOwner().isHuman() && player.gui.getSelectionMode() == Selection.MOVEMODE){
+				if(hovX >=  0 && hovX < player.getMapWidth() && hovY >= 0 && hovY < player.getMapHeight()){
 					g.setColor(Color.WHITE);
 					g.setStroke(new BasicStroke(2));
 					g.setFont(GUI.myFont);
 					int x = hovX;
 					int y = hovY;
-					if((x != selectedUnit.getX() || y != selectedUnit.getY()) && game.gs.getCell(x, y).getMoveCost() != GameState.IMPOSSIBLE){
-						g.drawString(String.valueOf(selectedUnit.getMovement() - game.gs.getCell(x, y).getMoveCost()), (toPixels(x + .4, true)  ), toPixels((y + .4), false));
-						while(game.gs.getCell(x, y).getFromX() != -1){
-							int newX = game.gs.getCell(x, y).getFromX();
-							int newY = game.gs.getCell(x, y).getFromY();
-							if(game.gs.getCell(newX, newY).getFromX() == -1){
+					if((x != selectedUnit.getX() || y != selectedUnit.getY()) && player.getCellMoveCost(x, y) != GameState.IMPOSSIBLE){
+						g.drawString(String.valueOf(selectedUnit.getMovement() - player.getCellMoveCost(x, y)), (toPixels(x + .4, true)  ), toPixels((y + .4), false));
+						while(player.getCellFromX(x, y) != -1){
+							int newX = player.getCellFromX(x, y);
+							int newY = player.getCellFromY(x, y);
+							if(player.getCellFromX(newX, newY) == -1){
 								g.drawLine(toPixels(x + .5, true), toPixels(y + .5, false), toPixels(newX + .5 + selectoffx, true) , toPixels(newY + .5 + selectoffy, false));
 	
 							}else{
@@ -524,7 +515,7 @@ public class Panel extends JPanel {
 		if(selectedUnit != null){
 			for(int i = -1; i <= 1; i++){
 				for(int j = -1; j <= 1; j++){
-					if((i != 0 || j != 0) && selectedUnit.getX() + i >= 0 && selectedUnit.getX() + i < game.gs.getMapWidth() && selectedUnit.getY() + j >= 0 && selectedUnit.getY() + j < game.gs.getMapHeight() && game.gs.getCell(selectedUnit.getX() + i, selectedUnit.getY() + j).getMoveCost() != GameState.IMPOSSIBLE){
+					if((i != 0 || j != 0) && selectedUnit.getX() + i >= 0 && selectedUnit.getX() + i < player.getMapWidth() && selectedUnit.getY() + j >= 0 && selectedUnit.getY() + j < player.getMapHeight() && player.getCell(selectedUnit.getX() + i, selectedUnit.getY() + j).getMoveCost() != GameState.IMPOSSIBLE){
 						canMove = true;
 						break;
 					}
@@ -536,143 +527,148 @@ public class Panel extends JPanel {
 			}
 		}
 		//Yellow movement lines
-		for(int x = Math.max(0, game.gs.getFarLeft() - 1); x < Math.min(game.gs.getMapWidth(), game.gs.getFarRight() + 2); x++){
-			for(int y = Math.max(0, game.gs.getFarUp() - 1); y < Math.min(game.gs.getMapHeight(), game.gs.getFarDown() + 2); y++){	
-				Cell cell = game.gs.getCell(x, y);
-				if(game.getCurrentPlayer().isHuman() && selectedUnit != null && !selectedUnit.isActive() && canMove && selectedUnit.getOwner().isHuman() && game.human.getSelectionMode() == Selection.MOVEMODE){
-					g.setColor(Color.yellow);
-					g.setStroke(dashed);
-					if(x > 0 && (cell.getMoveCost() != GameState.IMPOSSIBLE) && (game.gs.getCell(x - 1, y).getMoveCost() == GameState.IMPOSSIBLE || game.gs.getCell(x - 1, y).isOccupied())){
-						g.drawLine(toPixels(x,  true) - 10, toPixels(y, false) - 10, toPixels(x, true) - 10, toPixels(y + 1, false) + 10);
-					}
-					
-					if(y > 0 && (cell.getMoveCost() != GameState.IMPOSSIBLE) && (game.gs.getCell(x, y - 1).getMoveCost() == GameState.IMPOSSIBLE || game.gs.getCell(x, y - 1).isOccupied())){
-						g.drawLine(toPixels(x,  true) - 10, toPixels(y, false) - 10, toPixels(x + 1, true) + 10, toPixels(y, false) - 10);
-					}
-					
-					if(x < game.gs.getMapWidth() - 1 && (cell.getMoveCost() != GameState.IMPOSSIBLE) && (game.gs.getCell(x + 1, y).getMoveCost() == GameState.IMPOSSIBLE || game.gs.getCell(x + 1, y).isOccupied())){
-						g.drawLine(toPixels(x + 1,  true) + 10, toPixels(y, false) - 10, toPixels(x + 1, true) + 10, toPixels(y + 1, false) + 10);
-					}
-					
-					if(y < game.gs.getMapHeight() - 1 && (cell.getMoveCost() != GameState.IMPOSSIBLE) && (game.gs.getCell(x, y + 1).getMoveCost() == GameState.IMPOSSIBLE || game.gs.getCell(x, y + 1).isOccupied())){
-						g.drawLine(toPixels(x,  true) - 10, toPixels(y + 1, false) + 10, toPixels(x + 1, true) + 10, toPixels(y + 1, false) + 10);
-					}
-				}
-				
-				//Red shooting lines
-				if(game.getCurrentPlayer().isHuman() && selectedUnit != null && game.human.getSelectionMode() != Selection.MOVEMODE && selectedUnit.getAttackCost(game.human.getSelectedModeString()) <= selectedUnit.getMovement()){
-					g.setColor(Color.red);
-					g.setStroke(dashed);
-					if(x > 0 && (cell.canItBeShot(game.human)) && (!game.gs.getCell(x - 1, y).canItBeShot(game.human))){
-						g.drawLine(toPixels(x,  true) - 10, toPixels(y, false) - 10, toPixels(x, true) - 10, toPixels(y + 1, false) + 10);
-					}
-					
-					if(y > 0 && (cell.canItBeShot(game.human)) && (!game.gs.getCell(x, y - 1).canItBeShot(game.human))){
-						g.drawLine(toPixels(x,  true) - 10, toPixels(y, false) - 10, toPixels(x + 1, true) + 10, toPixels(y, false) - 10);
-					}
-					
-					if(x < game.gs.getMapWidth() - 1 && (cell.canItBeShot(game.human)) && (!game.gs.getCell(x + 1, y).canItBeShot(game.human))){
-						g.drawLine(toPixels(x + 1,  true) + 10, toPixels(y, false) - 10, toPixels(x + 1, true) + 10, toPixels(y + 1, false) + 10);
-					}
-					
-					if(y < game.gs.getMapHeight() - 1 && (cell.canItBeShot(game.human)) && (!game.gs.getCell(x, y + 1).canItBeShot(game.human))){
-						g.drawLine(toPixels(x,  true) - 10, toPixels(y + 1, false) + 10, toPixels(x + 1, true) + 10, toPixels(y + 1, false) + 10);
-					}
-				}
-				
-				
-				// draw the unit
-				if(cell.getUnit() != null){
-					
-					
-					//Red target circles
-					if(selectedUnit != null  && game.human.getSelectionMode() != Selection.MOVEMODE && cell.canItBeShot(game.human) && cell.getUnit().getOwner().isAI() && selectedUnit.getAttackCost(game.human.getSelectedModeString()) <= selectedUnit.getMovement()){
-						g.setColor(Color.red);
-						if(hovX == x && hovY == y && !selectedUnit.isShooting()){
-							g.fillArc(toPixels(x, true), toPixels(y, false), toPixels(1, true, false), toPixels(1, false, false), 0 , 360);
-						}else{
-							
-							g.drawArc(toPixels(x, true), toPixels(y, false), toPixels(1, true, false), toPixels(1, false, false), 0 , 360);
+		for(int x = Math.max(0, player.getFarLeft() - 1); x < Math.min(player.getMapWidth(), player.getFarRight() + 2); x++){
+			for(int y = Math.max(0, player.getFarUp() - 1); y < Math.min(player.getMapHeight(), player.getFarDown() + 2); y++){	
 	
+				if(player.getGameCurrentPlayer().isHuman() && selectedUnit != null && !selectedUnit.isActive() && canMove && selectedUnit.getOwner().isHuman() && player.gui.getSelectionMode() == Selection.MOVEMODE){
+					g.setColor(Color.yellow);
+					/*if(x == 11 && y == 6){
+						System.out.println((player.getCellMoveCost(x - 1 , y) == GameState.IMPOSSIBLE || player.getCell(x -1, y) != null || player.getCell(x - 1, y).isOccupied()));
+					}*/
+					g.setStroke(dashed);
+	
+					if(x > 0 && (player.getCellMoveCost(x, y) != GameState.IMPOSSIBLE) && (player.getCellMoveCost(x - 1 , y) == GameState.IMPOSSIBLE || (player.getCell(x -1, y) != null && player.getCell(x - 1, y).isOccupied()))){
+						g.drawLine(toPixels(x,  true) - 10, toPixels(y, false) - 10, toPixels(x, true) - 10, toPixels(y + 1, false) + 10);
+					}
+					
+					if(y > 0 && (player.getCellMoveCost(x, y) != GameState.IMPOSSIBLE) && (player.getCellMoveCost(x, y - 1) == GameState.IMPOSSIBLE || (player.getCell(x, y - 1) != null &&  player.getCell(x, y - 1).isOccupied()))){
+						g.drawLine(toPixels(x,  true) - 10, toPixels(y, false) - 10, toPixels(x + 1, true) + 10, toPixels(y, false) - 10);
+					}
+					
+					if(x < player.getMapWidth() - 1 && (player.getCellMoveCost(x, y) != GameState.IMPOSSIBLE) && (player.getCellMoveCost(x + 1, y) == GameState.IMPOSSIBLE || (player.getCell(x + 1, y) != null && player.getCell(x + 1, y).isOccupied()))){
+						g.drawLine(toPixels(x + 1,  true) + 10, toPixels(y, false) - 10, toPixels(x + 1, true) + 10, toPixels(y + 1, false) + 10);
+					}
+					
+					if(y < player.getMapHeight() - 1 && (player.getCellMoveCost(x, y) != GameState.IMPOSSIBLE) && (player.getCellMoveCost(x, y + 1) == GameState.IMPOSSIBLE || (player.getCell(x, y + 1) != null && player.getCell(x, y + 1).isOccupied()))){
+						g.drawLine(toPixels(x,  true) - 10, toPixels(y + 1, false) + 10, toPixels(x + 1, true) + 10, toPixels(y + 1, false) + 10);
+					}
+				}
+				Cell cell = player.getCell(x, y);
+				if(cell != null){
+					//Red shooting lines
+					if(player.getGameCurrentPlayer().isHuman() && selectedUnit != null && player.gui.getSelectionMode() != Selection.MOVEMODE && selectedUnit.getAttackCost(player.gui.getSelectedModeString()) <= selectedUnit.getMovement()){
+						g.setColor(Color.red);
+						g.setStroke(dashed);
+						if(x > 0 && (cell.canItBeShot(player)) && (!player.getCell(x - 1, y).canItBeShot(player))){
+							g.drawLine(toPixels(x,  true) - 10, toPixels(y, false) - 10, toPixels(x, true) - 10, toPixels(y + 1, false) + 10);
+						}
+						
+						if(y > 0 && (cell.canItBeShot(player)) && (!player.getCell(x, y - 1).canItBeShot(player))){
+							g.drawLine(toPixels(x,  true) - 10, toPixels(y, false) - 10, toPixels(x + 1, true) + 10, toPixels(y, false) - 10);
+						}
+						
+						if(x < player.getMapWidth() - 1 && (cell.canItBeShot(player)) && (!player.getCell(x + 1, y).canItBeShot(player))){
+							g.drawLine(toPixels(x + 1,  true) + 10, toPixels(y, false) - 10, toPixels(x + 1, true) + 10, toPixels(y + 1, false) + 10);
+						}
+						
+						if(y < player.getMapHeight() - 1 && (cell.canItBeShot(player)) && (!player.getCell(x, y + 1).canItBeShot(player))){
+							g.drawLine(toPixels(x,  true) - 10, toPixels(y + 1, false) + 10, toPixels(x + 1, true) + 10, toPixels(y + 1, false) + 10);
 						}
 					}
-				
-				
-				
-
-					if(cell.isViewed(game.human) || cell.getUnit().isMoving()){
-						boolean draw = cell.isViewed(game.human);
-						float xAmount = 0;
-						float yAmount = 0;
-						if(cell.getUnit().isMoving()){
-							int[] next = cell.getUnit().lookAtNext();
-							draw = draw || game.gs.getCell(next[0], next[1]).isViewed(game.human);
-							xAmount = (next[0] - x) * cell.getUnit().getMoveStep() / (float)GUI.MAXSTEP;
-							yAmount = (next[1] - y) * cell.getUnit().getMoveStep() / (float)GUI.MAXSTEP;
+					
+					
+					// draw the unit
+					if(cell.getUnit() != null){
+						
+						
+						//Red target circles
+						if(selectedUnit != null  && player.gui.getSelectionMode() != Selection.MOVEMODE && cell.canItBeShot(player) && cell.getUnit().getOwner().isAI() && selectedUnit.getAttackCost(player.gui.getSelectedModeString()) <= selectedUnit.getMovement()){
+							g.setColor(Color.red);
+							if(hovX == x && hovY == y && !selectedUnit.isShooting()){
+								g.fillArc(toPixels(x, true), toPixels(y, false), toPixels(1, true, false), toPixels(1, false, false), 0 , 360);
+							}else{
+								
+								g.drawArc(toPixels(x, true), toPixels(y, false), toPixels(1, true, false), toPixels(1, false, false), 0 , 360);
+		
+							}
 						}
-						if(draw){
-							g.setColor(Color.WHITE);
-							g.setStroke(new BasicStroke(10));
-							
-							//path of any moving unit
-							int pathX = x;
-							int pathY = y;
-							ListIterator<int[]> it = cell.getUnit().getPathIterator();
-							if(it.hasNext()){
-								int[] next = it.next();
-								g.drawLine(toPixels(pathX + .5 + xAmount, true), toPixels(pathY + .5 + yAmount, false), toPixels(next[0] + .5, true), toPixels(next[1] + .5, false));
-								pathX = next[0];
-								pathY = next[1];
-								while(it.hasNext()){
-									next = it.next();
-									g.drawLine(toPixels(pathX + .5, true), toPixels(pathY + .5, false), toPixels(next[0] + .5, true), toPixels(next[1] + .5, false));
+					
+					
+					
+	
+						if(cell.isViewed(player) || cell.getUnit().isMoving()){
+							boolean draw = cell.isViewed(player);
+							float xAmount = 0;
+							float yAmount = 0;
+							if(cell.getUnit().isMoving()){
+								int[] next = cell.getUnit().lookAtNext();
+								draw = draw || player.getCell(next[0], next[1]).isViewed(player);
+								xAmount = (next[0] - x) * cell.getUnit().getMoveStep() / (float)GUI.MAXSTEP;
+								yAmount = (next[1] - y) * cell.getUnit().getMoveStep() / (float)GUI.MAXSTEP;
+							}
+							if(draw){
+								g.setColor(Color.WHITE);
+								g.setStroke(new BasicStroke(10));
+								
+								//path of any moving unit
+								int pathX = x;
+								int pathY = y;
+								ListIterator<int[]> it = cell.getUnit().getPathIterator();
+								if(it.hasNext()){
+									int[] next = it.next();
+									g.drawLine(toPixels(pathX + .5 + xAmount, true), toPixels(pathY + .5 + yAmount, false), toPixels(next[0] + .5, true), toPixels(next[1] + .5, false));
 									pathX = next[0];
 									pathY = next[1];
-								}
-							}
-							
-							
-							g.drawImage(cell.getUnit().getImage(), toPixels(x + xAmount + .1, true), toPixels(y + yAmount + .1, false), toPixels(.8, true, false),  toPixels(.8, true, false), null);
-						
-							if(game.human.getBarMode().equals("Always") ||
-								(game.human.getBarMode().equals("Selected") && cell.getUnit().equals(selectedUnit) || 
-								(game.human.getBarMode().equals("Hover") && hovX == x && hovY == y))){
-								
-									drawHPBar(g, x, y, xAmount, yAmount, cell);
-									drawMoveBar(g, x, y, xAmount, yAmount, cell);
-							}else if(game.human.getBarMode().equals("Used")){
-								if(cell.getUnit().getHP() < cell.getUnit().getType().getMaxHP()){
-									drawHPBar(g, x, y, xAmount, yAmount, cell);
+									while(it.hasNext()){
+										next = it.next();
+										g.drawLine(toPixels(pathX + .5, true), toPixels(pathY + .5, false), toPixels(next[0] + .5, true), toPixels(next[1] + .5, false));
+										pathX = next[0];
+										pathY = next[1];
+									}
 								}
 								
-								if(cell.getUnit().getMovement() < cell.getUnit().getMaxMove()){
-									drawMoveBar(g, x, y, xAmount, yAmount, cell);
+								
+								g.drawImage(cell.getUnit().getImage(), toPixels(x + xAmount + .1, true), toPixels(y + yAmount + .1, false), toPixels(.8, true, false),  toPixels(.8, true, false), null);
+							
+								if(player.gui.getBarMode().equals("Always") ||
+									(player.gui.getBarMode().equals("Selected") && cell.getUnit().equals(selectedUnit) || 
+									(player.gui.getBarMode().equals("Hover") && hovX == x && hovY == y))){
+									
+										drawHPBar(g, x, y, xAmount, yAmount, cell);
+										drawMoveBar(g, x, y, xAmount, yAmount, cell);
+								}else if(player.gui.getBarMode().equals("Used")){
+									if(cell.getUnit().getHP() < cell.getUnit().getType().getMaxHP()){
+										drawHPBar(g, x, y, xAmount, yAmount, cell);
+									}
+									
+									if(cell.getUnit().getMovement() < cell.getUnit().getMaxMove()){
+										drawMoveBar(g, x, y, xAmount, yAmount, cell);
+									}
 								}
+								
+								
 							}
-							
-							
 						}
-					}
-					if(selectedUnit != null  && game.human.getSelectionMode() != Selection.MOVEMODE && cell.canItBeShot(game.human) && cell.getUnit().getOwner().isAI() && selectedUnit.getAttackCost(game.human.getSelectedModeString()) <= selectedUnit.getMovement()){
-						if(hovX == x && hovY == y && !selectedUnit.isShooting()){
-							g.setColor(Color.black);
-							g.fillRect(toPixels(x + .3, true), toPixels(y + .3, false), toPixels(.55, true, false), toPixels(.3, false, false));
-							int acc = selectedUnit.getAcc(game.human.getSelectedModeString(), game.gs.getCell(selectedUnit).getElevation() < cell.getElevation());
-							g.setColor(getColor(acc / 100f));
-							g.drawString(selectedUnit.getAcc(game.human.getSelectedModeString(), game.gs.getCell(selectedUnit).getElevation() < cell.getElevation()) + "%", toPixels(x + .4, true), toPixels(y + .5, false));
+						if(selectedUnit != null  && player.gui.getSelectionMode() != Selection.MOVEMODE && cell.canItBeShot(player) && cell.getUnit().getOwner().isAI() && selectedUnit.getAttackCost(player.gui.getSelectedModeString()) <= selectedUnit.getMovement()){
+							if(hovX == x && hovY == y && !selectedUnit.isShooting()){
+								g.setColor(Color.black);
+								g.fillRect(toPixels(x + .3, true), toPixels(y + .3, false), toPixels(.55, true, false), toPixels(.3, false, false));
+								int acc = selectedUnit.getAcc(player.gui.getSelectedModeString(), player.getCell(selectedUnit).getElevation() < cell.getElevation());
+								g.setColor(getColor(acc / 100f));
+								g.drawString(selectedUnit.getAcc(player.gui.getSelectedModeString(), player.getCell(selectedUnit).getElevation() < cell.getElevation()) + "%", toPixels(x + .4, true), toPixels(y + .5, false));
+							}
 						}
 					}
 				}
-				
 			}
 		}
 		
-		for(int x = 0; x < game.gs.getMapWidth(); x++){
-			for(int y = 0; y < game.gs.getMapHeight(); y++){
-				Cell cell = game.gs.getCell(x, y);
-				if(cell.getUnit() != null){
+		for(int x = 0; x < player.getMapWidth(); x++){
+			for(int y = 0; y < player.getMapHeight(); y++){
+				Cell cell = player.getCell(x, y);
+				if(cell != null && cell.getUnit() != null){
 					if(cell.getUnit().isShooting()){
-						if(game.gs.getCell(cell.getUnit().getTarget()).isViewed(game.human)){
+						if(player.getCell(cell.getUnit().getTarget()).isViewed(player)){
 							g.setColor(Color.red);
 							g.setStroke(new BasicStroke(3));
 							g.drawArc(toPixels(cell.getUnit().getTarget().getX(), true), toPixels(cell.getUnit().getTarget().getY(), false), toPixels(1, true, false), toPixels(1, false, false), 0 , 360);
@@ -694,17 +690,17 @@ public class Panel extends JPanel {
 				}
 				//XXX debuging
 				//g.setColor(Color.YELLOW);
-				//g.drawString(x + ":" + y, toPixels(x + .5, true), toPixels(y + .5, false));
+				//g.drawString("" + player.getCellMoveCost(x, y), toPixels(x + .5, true), toPixels(y + .5, false));
 			}
 		}
 		
 		
 		//Scoreboard
 		
-		if(game.human.doShowScore()){
+		if(player.gui.doShowScore()){
 
 			int count = 0;
-			for(Player p: game.getPlayers()){
+			for(Player p: player.getPlayers()){
 				g.setColor(ContrastColor(p.getColour()));
 				g.fillRect(getWidth() - 160, 25 * count, 160, 25);
 				g.setColor(p.getColour());
@@ -773,7 +769,17 @@ public class Panel extends JPanel {
 			hovX = x;
 			hovY = y;
 		}
-		game.human.repaintAll();
+		player.gui.repaintAll();
+		
+	}
+
+
+
+
+
+
+	public void setPlayer(LocalPlayer player) {
+		this.player = player;
 		
 	}
 

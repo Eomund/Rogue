@@ -9,7 +9,8 @@ public class EliminationGame extends GameType {
 		super(mapWidth, mapHeight, armySize);
 	}
 	
-	public void Setup(){
+	@Override
+	public void setup(){
 		for(Player p: getPlayers()){
 			p.setScore(p.getUnits().size());
 		}
@@ -37,6 +38,12 @@ public class EliminationGame extends GameType {
 	public void killUnit(Player killer, Player dier) {
 		dier.addToScore(-1);
 
+	}
+
+	@Override
+	public void startNewTurn() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

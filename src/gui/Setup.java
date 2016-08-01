@@ -1,4 +1,7 @@
 package gui;
+import helpers.Config;
+import helpers.Zone;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -24,11 +27,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import core.GameType;
-import core.Panel;
-import helpers.AI;
-import helpers.Config;
-import helpers.Player;
-import helpers.Zone;
 
 
 public class Setup implements ActionListener, MouseListener, ChangeListener{
@@ -52,6 +50,7 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 	private JTabbedPane tabs = new JTabbedPane();
 	private JTextField names[] = new JTextField[ABSOLUTEMAXTEAMS];
 	private JLabel colourLabels[] = new JLabel[ABSOLUTEMAXTEAMS]; 
+	@SuppressWarnings("unchecked")
 	private JComboBox<String> active[] = new JComboBox[ABSOLUTEMAXTEAMS];
 	private Color colours[] = new Color[]{Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Color.BLACK, Color.WHITE, Color.CYAN, Color.PINK, Color.MAGENTA, Color.GRAY, Color.LIGHT_GRAY, Color.DARK_GRAY, Color.ORANGE};
 	private JFrame frame = new JFrame();
@@ -240,7 +239,6 @@ public class Setup implements ActionListener, MouseListener, ChangeListener{
 		ArrayList<String> playerNames = new ArrayList<>();
 		ArrayList<Color> cols = new ArrayList<>();
 		ArrayList<Boolean> bools = new ArrayList<>();
-		ArrayList<Player> players = new ArrayList<Player>();
 		for(int i = 0; i < ABSOLUTEMAXTEAMS; i++){
 			if(!active[i].getSelectedItem().equals("Closed")){
 				playerNames.add(names[i].getText());

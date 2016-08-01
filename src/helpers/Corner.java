@@ -33,6 +33,7 @@ public class Corner implements Serializable{
 		return heightDiff;
 	}
 	
+	@Override
 	public String toString(){
 		String str = "Type: ";
 		

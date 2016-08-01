@@ -1,15 +1,16 @@
 package gui;
 
 
+import helpers.Config;
+import helpers.Player;
+
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -20,10 +21,6 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import core.GameType;
-import core.Panel;
-import helpers.Config;
-import helpers.Player;
-import helpers.Zone;
 
 @SuppressWarnings("serial")
 public class Splash extends JFrame{
@@ -69,13 +66,14 @@ public class Splash extends JFrame{
 		});
 		
 		add(buttons, BorderLayout.SOUTH);
-		setSize(500, 800);
+		setSize(500, 400);
 		setLocation(600, 20);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
 	}
 	
-    private boolean loadQuick() {
+    @SuppressWarnings("unchecked")
+	private boolean loadQuick() {
     	File f = new File(FileDialog.fileRoot);
 		if(!f.exists()){
 			f.mkdirs();
@@ -114,7 +112,9 @@ public class Splash extends JFrame{
         final long mapSeed = args.length > 0 ? Long.parseLong(args[0]) : System.nanoTime();
         Config.loadConfigValues();
         final long gameSeed = args.length > 1 ? Long.parseLong(args[1]) : System.nanoTime();
-        java.awt.EventQueue.invokeLater(new Runnable() { public void run() {
+        java.awt.EventQueue.invokeLater(new Runnable() { 
+        @Override
+		public void run() {
         	new Splash(mapSeed, gameSeed);
         }});
     }

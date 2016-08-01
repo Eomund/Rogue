@@ -2,7 +2,6 @@ package gui;
 import java.awt.BorderLayout;
 import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,21 +16,18 @@ import java.util.HashMap;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import com.sun.xml.internal.ws.api.Component;
-
-import core.GameState;
 import core.GameType;
-import core.Panel;
+import core.Unit;
 
 
 @SuppressWarnings("serial")
@@ -51,8 +47,10 @@ public class FileDialog extends JDialog {
 	private Window frame;
 	private Thing thing;
 	private Mode mode;
-	private GameType gt;
 	private boolean success = false;
+	private LocalPlayer player;
+	private GUI oldGUI;
+	private Timer time;
 	
 	static{
 		locations.put(Thing.GAME, "/games/");
@@ -140,11 +138,9 @@ public class FileDialog extends JDialog {
 						return;
 					}
 				}
-				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(f));
-				out.writeObject(gt);
-				out.close();
-				closeDialog();
+				player.saveGame(new ObjectOutputStream(new FileOutputStream(f)));
 				success = true;
+				closeDialog();
 			} catch (IOException e) {
 				e.printStackTrace();
 				success = false;
@@ -154,15 +150,21 @@ public class FileDialog extends JDialog {
 			JOptionPane.showMessageDialog(this, "Game saved", "Game saved", JOptionPane.INFORMATION_MESSAGE);
 		}else{
 			try {
+				time.stop();
+				for(ActionListener list:time.getActionListeners()){
+					time.removeActionListener(list);
+				}
 				if(text.getText().trim().isEmpty()){
 					JOptionPane.showMessageDialog(this, "You must choose a file", "No file", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
 				File f = new File(fileRoot + locations.get(thing) + text.getText() + ".asg");
 				ObjectInputStream in = new ObjectInputStream(new FileInputStream(f));
-				gt = (GameType) in.readObject();
+				GameType gt = (GameType) in.readObject();
+				GameType.load(gt, oldGUI);
 				in.close();
 				closeDialog();
+				frame.setVisible(false);
 			} catch (IOException e) {
 				e.printStackTrace();
 				JOptionPane.showMessageDialog(this, "There was an error reading the file", "I/O Error", JOptionPane.ERROR_MESSAGE);
@@ -182,17 +184,27 @@ public class FileDialog extends JDialog {
 	
 
 
-	@SuppressWarnings("hiding")
-	private void showDialog(Thing thing, Mode mode) {
-		if(mode == Mode.SAVE && !gt.getCurrentPlayer().isHuman()){
+	private void showDialog(Thing t, Mode m) {
+		if(m == Mode.SAVE && !player.getGameCurrentPlayer().isHuman()){
 			JOptionPane.showMessageDialog(this, "You can only save the game on your turn", "Wait for your turn", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
+		if(m == Mode.SAVE){
+			boolean unitActive = false;
+			for(Unit u:player.getUnits()){
+				if(u.isActive()){
+					unitActive = true;
+					return;
+				}
+			}
+			if(unitActive){
+				JOptionPane.showMessageDialog(this, "You cannot save while your units are active", "Please wait for your units to stop moving.", JOptionPane.ERROR_MESSAGE);
+			}
+		}
 		
-		
-		this.thing = thing;
-		this.mode = mode;
-		File loc = new File(fileRoot + locations.get(thing));
+		this.thing = t;
+		this.mode = m;
+		File loc = new File(fileRoot + locations.get(t));
 		if(loc.list() == null){
 			loc.mkdirs();
 		}
@@ -202,7 +214,7 @@ public class FileDialog extends JDialog {
 				model.addElement(parts[0]);
 			}
 		}
-		if(mode == Mode.SAVE){
+		if(m == Mode.SAVE){
 			done.setText("Save");
 			text.setEditable(true);
 			setTitle("Save");
@@ -218,18 +230,20 @@ public class FileDialog extends JDialog {
 		
 	}
 	
-	public static boolean showSaveGameDialog(Window holder, GameType gt){
+	public static boolean showSaveGameDialog(Window holder, LocalPlayer player){
+		
 		FileDialog fd = new FileDialog(holder);
-		fd.gt = gt;
+		fd.player = player;
 		fd.showDialog(Thing.GAME, Mode.SAVE);
 		return fd.success;
 	}
 
 
-	public static GameType showLoadGameDialog(Window holder) {
+	public static void showLoadGameDialog(Window holder, GUI gui, Timer t) {
 		FileDialog fd = new FileDialog(holder);
+		fd.oldGUI = gui;
+		fd.time = t;
 		fd.showDialog(Thing.GAME, Mode.LOAD);
-		return fd.gt;
 	}
 	
 	

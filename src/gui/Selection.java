@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -15,10 +14,6 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.border.EmptyBorder;
 
-import core.Cell;
-import core.GameState;
-import core.GameType;
-import core.Panel;
 import core.Unit;
 
 
@@ -28,7 +23,7 @@ public class Selection extends JPanel implements ActionListener{
 	public static final int MOVEMODE = -1;
 	
 	//private static final int STATSHEIGHT = 239;
-	private GameType game;
+	private LocalPlayer player;
 	private JLabel stats = new JLabel();
 	private JPanel bp = new JPanel();
 	
@@ -39,9 +34,9 @@ public class Selection extends JPanel implements ActionListener{
 	
 	private ArrayList<JToggleButton> buttons = new ArrayList<JToggleButton>();
 	
-	public Selection (GameType game, JButton end){
-		assert game != null;
-		this.game = game;
+	public Selection (LocalPlayer player, JButton end){
+		assert player != null;
+		this.player = player;
 		stats.setFont(GUI.myFont);
 		stats.setBorder( new EmptyBorder( 20, 20, 20, 20 ) );
 		setLayout(new BorderLayout());
@@ -60,7 +55,7 @@ public class Selection extends JPanel implements ActionListener{
 		dirty = true;
 		this.unit = u;
 		setMode(MOVEMODE);
-		findWhereYouCanMove();
+		player.findWhereYouCanMove(u);
 		setButtonsEnabled(!unit.isActive());
 		repaint();
 	}
@@ -71,7 +66,7 @@ public class Selection extends JPanel implements ActionListener{
 		mode = i;
 		updateStatsText(mode);
 		if(i != MOVEMODE){
-			game.gs.calculateShooting(unit, getModeString());
+			player.calculateShooting(unit, getModeString());
 		}
 	}
 
@@ -96,50 +91,9 @@ public class Selection extends JPanel implements ActionListener{
 
 
 
-	public void findWhereYouCanMove() {
-		if(unit != null){
-			Iterator<ArrayList<Cell>> it = game.gs.getMapIterator();
-			while(it.hasNext()){
-				for(Cell cell: it.next()){
-					cell.setMoveCost(-1);
-					cell.setFrom(-1, -1);
-				}
-			}
-			game.gs.getCell(unit).setMoveCost(unit.getMovement());
-			moveFrom(unit.getX(), unit.getY(), unit.getMovement());
-			
-			
-			repaint();
-		}
-	}
 	
 
-
-	private void moveFrom(int x, int y, double m) {
-		for(int i = -1; i <= 1; i++){
-			for(int j = -1; j <= 1; j++){
-				if(i == 0 && j == 0){
-					continue;
-				}
-				if(x + i >= 0 && x + i <game.gs.getMapWidth() && y + j >= 0 && y + j <game.gs.getMapHeight()){
-					double mc =game.gs.getMoveCost(x, y, x + i, y + j, game.human);
-					if(mc != GameState.IMPOSSIBLE){
-						if(i != 0 && j != 0){
-							mc *= 1.5;
-						}
-						double ml = m - mc;
-						if(ml >= 0 && ml > game.gs.getCell(x + i, y + j).getMoveCost()){
-							game.gs.getCell(x + i, y + j).setMoveCost(ml);
-							game.gs.getCell(x + i, y + j).setFrom(x, y);
-							moveFrom(x + i, y + j, ml);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	public void updateSidebar(int turn){
+	public void updateSidebar(){
 		if(dirty){
 			dirty = false;
 			if(unit != null){
@@ -161,7 +115,7 @@ public class Selection extends JPanel implements ActionListener{
 						if(mode == MOVEMODE){
 							buttons.get(i).setSelected(false);
 						}
-						if(game.getPlayer(turn).isHuman() && unit.getMovement() > unit.getAttackCost(name)){
+						if(player.getGameCurrentPlayer().isHuman() && unit.getMovement() > unit.getAttackCost(name)){
 							buttons.get(i).setEnabled(true);
 						}else{
 							buttons.get(i).setEnabled(false);
@@ -245,8 +199,12 @@ public class Selection extends JPanel implements ActionListener{
 
 
 	public void setButtonsEnabled(boolean b) {
-		for(JToggleButton but: buttons){
-			but.setEnabled(b);
+		if(unit != null){
+			for(JToggleButton but: buttons){
+				if(unit.getAttackCost(but.getText()) >= unit.getMovement()){
+					but.setEnabled(b);
+				}
+			}
 		}
 		
 	}
@@ -262,7 +220,7 @@ public class Selection extends JPanel implements ActionListener{
 
 
 
-	public void setButtensSelected(boolean b) {
+	public void setButtonsSelected(boolean b) {
 		for(JToggleButton but: buttons){
 			but.setSelected(b);
 		}
@@ -272,10 +230,14 @@ public class Selection extends JPanel implements ActionListener{
 
 
 
-	public void setGame(GameType g2) {
-		game = g2;
-		deselect();
+	public void setPlayer(LocalPlayer player) {
+		this.player = player;
+		
 	}
+
+
+
+
 
 
 }

@@ -38,7 +38,22 @@ public class Cell implements Serializable{
 	
 	private boolean occupied = false;
 
-	
+	public Cell(Cell cell) {
+		this.unit = cell.unit;
+		this.fromX = cell.fromX;
+		this.fromY = cell.fromY;
+		this.region = cell.region;
+		this.occupied = cell.occupied;
+		this.canShoot = cell.canShoot;
+		this.viewStatus = cell.viewStatus;
+		this.elevation = cell.elevation;
+		this.corner = cell.corner;
+		this.edge = cell.edge;
+		this.terr = cell.terr;
+		this.angle = cell.angle;
+		this.angleSet = cell.angleSet;
+		this.move = cell.move;
+	}
 	
 	public boolean isOccupied() {
 		return occupied;
@@ -55,6 +70,8 @@ public class Cell implements Serializable{
 		elevation = e;
 		terr = t;
 	}
+
+
 
 
 	public int getElevation() {
@@ -82,6 +99,7 @@ public class Cell implements Serializable{
 		return edge[i];
 	}
 	
+	@Override
 	public String toString(){
 		String str = "";
 		str += "MC: " + move + "\n";

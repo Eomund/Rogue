@@ -3,7 +3,6 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.nio.file.Files;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -16,11 +15,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
-
-import core.GameType;
-import core.Panel;
 
 @SuppressWarnings("serial")
 public class Menu extends JDialog {
@@ -31,14 +26,12 @@ public class Menu extends JDialog {
 	private boolean showScore = true;
 	private JComboBox<String> bars = new JComboBox<>(new String[]{"Always", "Selected", "Hover", "Used"});
 	private JCheckBox score = new JCheckBox("Show score");
-	private Timer time;
 	private JFrame frame;
-	private GameType gt;
+	private LocalPlayer player;
 
-	public Menu(JFrame frame, String string, boolean b, Timer time) {
+	public Menu(JFrame frame, String string, boolean b) {
 		super(frame, string, b);
 		this.frame = frame;
-		this.time = time;
 		setSize(300, 400);
 		
 
@@ -60,7 +53,7 @@ public class Menu extends JDialog {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				open(gt);
+				open(player);
 			}
 		});
 		
@@ -88,8 +81,8 @@ public class Menu extends JDialog {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				assert gt != null;
-				FileDialog.showSaveGameDialog(Menu.this, gt);
+				assert player != null;
+				FileDialog.showSaveGameDialog(Menu.this, player);
 			}
 		});
 		
@@ -100,7 +93,7 @@ public class Menu extends JDialog {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				GameType.load(FileDialog.showLoadGameDialog(Menu.this));
+				FileDialog.showLoadGameDialog(Menu.this, player.gui, player.getTime());
 			}
 		});
 
@@ -152,10 +145,9 @@ public class Menu extends JDialog {
 		options.setLayout(new GridLayout(2, 2, 20, 20));
 	}
 
-	public void open(GameType gameType) {
-		Menu.this.time.stop();
+	public void open(LocalPlayer p) {
 		setLocation(frame.getLocationOnScreen().x + (frame.getWidth() - getWidth()) / 2, frame.getLocationOnScreen().y + (frame.getHeight() - getHeight()) / 2);
-		this.gt = gameType;
+		this.player = p;
 		setVisible(true);
 	}
 
@@ -173,8 +165,7 @@ public class Menu extends JDialog {
 
 	public void close() {
 		setVisible(false);
-		time.start();
-		gt = null;
+		player = null;
 	}
 	
 	

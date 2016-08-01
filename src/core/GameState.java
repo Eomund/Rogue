@@ -1,6 +1,14 @@
 package core;
+import gui.FileDialog;
+import gui.LocalPlayer;
+import helpers.Config;
+import helpers.Corner;
+import helpers.Player;
+import helpers.Terrain;
+import helpers.UnitType;
+import helpers.Zone;
+
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -12,16 +20,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Scanner;
-
-import gui.FileDialog;
-import helpers.AI;
-import helpers.Config;
-import helpers.Corner;
-import helpers.Player;
-import helpers.Terrain;
-import helpers.UnitType;
-import helpers.Zone;
 
 
 public class GameState implements Serializable {
@@ -39,10 +37,7 @@ public class GameState implements Serializable {
 	
 	public static final int IMPOSSIBLE = -1;
 	private static final int MOVEGUESS = 2;
-	private int farLeft;
-	private int farUp;
-	private int farRight = 0;
-	private int farDown = 0;
+	
 	private ArrayList<Zone> zones = new ArrayList<>();
 	private int largestRegion = -1;
 	private int armySize;
@@ -53,8 +48,7 @@ public class GameState implements Serializable {
 		this.mapwidth = mapwidth;
 		this.mapheight = mapheight;
 		this.armySize  = armySize;
-		farLeft = mapwidth;
-		farUp = mapheight;
+
 
 	}
 	
@@ -92,21 +86,28 @@ public class GameState implements Serializable {
 			}
 		}
 		
-		System.out.println(mapSeed);
+		System.out.println("Map seed:" + mapSeed);
 		rand = new Random(mapSeed);
 		boolean success = false;
+		boolean first = true;
 		while(!success){
-			success = generateElevation(hillyness) && generateWater() && generateRegions() && generateZones(gs) && testZones() && handOutZones() && generateLines() && generateUnits();
+			success = generateElevation(hillyness) && generateWater() && generateRegions();
+			if(first){
+				long gameSeed = gs;
+				System.out.println("Game seed" + gameSeed);
+				rand.setSeed(gameSeed);
+				first = false;
+			}
+			success = success && generateZones() && testZones() && handOutZones() && generateLines() && generateUnits();
 		}
 		
 	}
 
 
 
-	private boolean generateZones(long gs) {
-		long gameSeed = gs;
-		System.out.println(gameSeed);
-		rand.setSeed(gameSeed);
+	private boolean generateZones() {
+
+		zones.clear();
 		
 		
 		System.out.println("Generating zones ...");
@@ -166,7 +167,6 @@ public class GameState implements Serializable {
 				zones.add(new Zone(x, y));
 			}
 		}
-		
 		return true;
 	}
 
@@ -208,35 +208,10 @@ public class GameState implements Serializable {
 		
 		System.out.println("Handing out zones...");
 		for(Player p: game.getPlayers()){
-			int z = -1;
-			boolean good = true;
-			do{
-				good = true;
-				z = rand.nextInt(zones.size());
+			Zone z = zones.remove(getRandInt(zones.size()));
 				
-				if(!zones.get(z).isGood()){
-					good = false;
-					continue;
-				}
-				
-				
-				for(Player other:game.getPlayers()){
-					if(other.equals(p)){
-						continue;
-					}
-					if(other.getZone() == null){
-						break;
-					}
-					if(other.getZone().equals(zones.get(z))){
-						good = false;
-						break;
-					}
-				}
-					
-				
-			}while(!good);
 			System.out.println(z + " given to " + p.getName());
-			p.setZone(zones.get(z));
+			p.setZone(z);
 			
 		}
 		
@@ -247,18 +222,19 @@ public class GameState implements Serializable {
 
 
 	private boolean testZones() {
-		for(Zone z:zones){
-			z.makeBad();
-		}
 		
 		System.out.println("Testing zones...");
 		int goodZones = 0;
+		ArrayList<Zone> bad = new ArrayList<>();
 		for(Zone z: zones){
 			z.findGoodness(this, largestRegion, armySize * 2);
 			if(z.isGood()){
 				goodZones++;
+			}else{
+				bad.add(z);
 			}
 		}
+		zones.removeAll(bad);
 		System.out.println(goodZones + " > " + game.getNumPlayers());
 		return goodZones > game.getNumPlayers();
 		
@@ -300,7 +276,6 @@ public class GameState implements Serializable {
 				largestRegion = i;
 			}
 		}
-		
 		return true;
 	}
 
@@ -361,8 +336,8 @@ public class GameState implements Serializable {
 				spawnUnit(p);
 			}
 		}
-		
 		calculateViewing();
+
 		return true;
 		
 	}
@@ -502,7 +477,7 @@ public class GameState implements Serializable {
 		}
 		if(!shooting){
 			if(p.isHuman()){
-				setExtremes(fromX, fromY);
+				((LocalPlayer) p).setExtremes(fromX, fromY);
 				getCell(fromX, fromY).setViewed(p);
 			}
 		}else{
@@ -519,7 +494,7 @@ public class GameState implements Serializable {
 			}
 			if(cell.getAngle() >= maxangle){
 				if(p.isHuman()){
-					setExtremes(targets.get(i)[0], targets.get(i)[1]);
+					((LocalPlayer) p).setExtremes(targets.get(i)[0], targets.get(i)[1]);
 				}
 				if(!shooting){
 					cell.setViewed(p);
@@ -536,24 +511,7 @@ public class GameState implements Serializable {
 
 
 
-	private void setExtremes(int x, int y) {
-		if(x < farLeft){
-			farLeft = Math.max(x, 0);
-		}
-		
-		if(y < farUp){
-			farUp = Math.max(y, 0);
-		}
-		
-		if(x > farRight){
-			farRight = Math.min(x, mapwidth);
-		}
-		
-		if(y > farDown){
-			farDown = Math.min(y, mapheight);
-		}
-		
-	}
+	
 
 
 
@@ -986,7 +944,6 @@ public class GameState implements Serializable {
 	public boolean setDestination(Unit unit, int toX, int toY) {
 			
 			
-			
 		int x = toX;
 		int y = toY;
 		int fromX = unit.getX();
@@ -1087,23 +1044,6 @@ public class GameState implements Serializable {
 
 
 	
-	public int getFarLeft() {
-		return farLeft;
-	}
-
-
-	public int getFarUp() {
-		return farUp;
-	}
-	
-	public int getFarRight() {
-		return farRight;
-	}
-
-
-	public int getFarDown() {
-		return farDown;
-	}
 
 
 
